@@ -1,0 +1,108 @@
+Package Project/
+├── spiders/        # 爬蟲核心邏輯
+│   └── demo_spider.py  # 爬蟲實例 (繼承scrapy.Spider)
+├── items.py        # 資料容器定義
+├── pipelines.py    # 資料處理管線
+├── settings.py     # 全域配置設定
+└── scrapy.cfg      # 部署配置文件
+核心組件詳解
+1. Spiders/ (爬蟲邏輯)
+python
+# 範例：新聞爬蟲
+class NewsSpider(scrapy.Spider):
+    name = 'news'
+    start_urls = ['https://news.example.com']
+
+    def parse(self, response):
+        for article in response.css('div.article'):
+            yield {
+                'title': article.css('h2::text').get(),
+                'url': article.css('a::attr(href)').get()
+            }
+#(功能：定義爬取規則與數據解析
+核心方法：
+start_requests(): 初始請求
+parse(): 解析響應內容
+選擇器：支援XPath/CSS Selector)
+
+2. items.py (資料結構)
+python
+import scrapy
+class NewsItem(scrapy.Item):
+    title = scrapy.Field()
+    url = scrapy.Field()
+    content = scrapy.Field()
+    publish_date = scrapy.Field()
+#(作用：規範化爬取數據格式
+優勢：
+統一數據字段
+防止字段拼寫錯誤
+方便與Pipeline整合)
+
+3. pipelines.py (數據處理)
+python
+class MongoDBPipeline:
+    def process_item(self, item, spider):
+        # 連接MongoDB並儲存數據
+        db[spider.name].insert_one(dict(item))
+        return item
+class CSVExportPipeline:
+    def open_spider(self, spider):
+        self.file = open('news.csv', 'w')
+    def process_item(self, item, spider):
+        self.file.write(f"{item['title']},{item['url']}\n")
+        return item
+
+#(主要功能：
+1數據清洗
+2數據驗證
+3數據儲存
+4典型應用：
+5數據庫寫入
+6文件導出
+7數據去重)
+
+4. settings.py (全局配置)
+python
+# 常用配置參數
+USER_AGENT = 'Mozilla/5.0 (...)'
+CONCURRENT_REQUESTS = 16
+DOWNLOAD_DELAY = 2
+ITEM_PIPELINES = {
+    'project.pipelines.MongoDBPipeline': 300,
+    'project.pipelines.CSVExportPipeline': 800,
+}
+#(關鍵配置：
+爬蟲行為控制
+中間件啟用
+管線優先級
+反爬策略設定)
+
+5. scrapy.cfg (部署配置)
+ini
+[settings]
+default = project.settings
+[deploy]
+url = http://scrapy-cloud.example.com
+project = news_crawler
+#(主要用途：
+
+部署到Scrapy雲端服務
+設定運行環境
+配置項目別名
+進階功能模組)
+
+ Project/
+├── middlewares.py  # 自定義中間件
+├── extensions.py   # 擴展功能
+├── commands/       # 自定義CLI指令
+└── utils/          # 工具函數集
+#(中間件應用：
+請求代理切換
+自定義重試機制
+瀏覽器頭部隨機化
+擴展應用：
+性能監控
+異常通知
+統計數據收集)
+
